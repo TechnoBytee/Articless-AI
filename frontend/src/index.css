@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-saturn-primary: #D4A373;
+  --color-saturn-bg: #FAEDCD;
+  
+  --color-moon-primary: #ADB5BD;
+  --color-moon-bg: #121212;
+  
+  --color-venus-primary: #E5989B;
+  --color-venus-bg: #2B1516;
+  
+  --color-space-primary: #4CC9F0;
+  --color-space-bg: #0B090A;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #0B090A;
+
+  font-synthesize: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Base Theme Classes */
+.theme-saturn {
+  background-color: var(--color-saturn-bg);
+  color: #4A3B32;
+  background-image: none;
+}
+.theme-moon {
+  background-color: var(--color-moon-bg);
+  color: #E9ECEF;
+  background-image: radial-gradient(circle at top left, #212529 0%, #121212 100%);
+}
+.theme-venus {
+  background-color: var(--color-venus-bg);
+  color: #FFE5E5;
+  background-image: radial-gradient(circle at bottom right, #402022 0%, #2B1516 100%);
+}
+.theme-space {
+  background-color: var(--color-space-bg);
+  color: #F8F9FA;
+  background-image: radial-gradient(circle at center, #1B1B1E 0%, #0B090A 100%);
+}
+
+/* Force specific colors for elements that have background transparency or low contrast */
+/* Dark themes use white transparency */
+.theme-venus .bg-white\/5, .theme-moon .bg-white\/5, .theme-space .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.theme-venus .bg-white\/10, .theme-moon .bg-white\/10, .theme-space .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Light themes (Saturn) use black transparency for cards and borders */
+.theme-saturn .bg-white\/5, .theme-saturn .bg-white\/10, .theme-saturn .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.theme-saturn .border-white\/10, .theme-saturn .border-white\/20, .theme-saturn .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.theme-saturn .text-white\/50, .theme-saturn .text-white\/70, .theme-saturn .text-white {
+  color: #4A3B32;
+  opacity: 0.8;
+}
+
