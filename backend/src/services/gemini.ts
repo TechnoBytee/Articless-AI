@@ -80,7 +80,7 @@ export const generateWriterChat = async (rolePrompt: string, messages: { role: s
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      systemInstruction: rolePrompt,
+      config: { systemInstruction: rolePrompt },
       contents: messages,
     });
     return response.text || '';
