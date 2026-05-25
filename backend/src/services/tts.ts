@@ -22,15 +22,54 @@ export const generateAudio = async (text: string): Promise<string> => {
   }
 
   return new Promise((resolve, reject) => {
+    let streamObj: any;
     try {
-        const streamObj = tts.toStream(text);
-        const writeStream = fs.createWriteStream(filepath);
-        
-        streamObj.audioStream.pipe(writeStream);
-        writeStream.on('finish', () => resolve(filename));
-        writeStream.on('error', reject);
-    } catch (error) {
-        reject(error);
+      streamObj = tts.toStream(text);
+      if (!streamObj || !streamObj.audioStream) {
+        throw new Error('TTS streamObj veya audioStream oluşturulamadı.');
+      }
+    } catch (err) {
+      if (fs.existsSync(filepath)) {
+        try { fs.unlinkSync(filepath); } catch (_) {}
+      }
+      return reject(err);
+    }
+
+    const writeStream = fs.createWriteStream(filepath);
+    let finished = false;
+
+    const cleanupAndReject = (err: any) => {
+      if (finished) return;
+      finished = true;
+      writeStream.destroy();
+      try {
+        if (streamObj.audioStream && typeof streamObj.audioStream.destroy === 'function') {
+          streamObj.audioStream.destroy();
+        }
+      } catch (_) {}
+      if (fs.existsSync(filepath)) {
+        try { fs.unlinkSync(filepath); } catch (_) {}
+      }
+      reject(err);
+    };
+
+    streamObj.audioStream.on('error', (err: any) => {
+      cleanupAndReject(err);
+    });
+
+    writeStream.on('error', (err: any) => {
+      cleanupAndReject(err);
+    });
+
+    writeStream.on('finish', () => {
+      finished = true;
+      resolve(filename);
+    });
+
+    try {
+      streamObj.audioStream.pipe(writeStream);
+    } catch (err) {
+      cleanupAndReject(err);
     }
   });
 };

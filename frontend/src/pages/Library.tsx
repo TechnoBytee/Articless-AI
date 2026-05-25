@@ -11,11 +11,13 @@ export const Library = () => {
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [activeGraphShelf, setActiveGraphShelf] = useState<any | null>(null);
 
-  const handleQuickAudio = async (articleId: string) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  const handleQuickAudio = async (article: any) => {
     try {
-      const res = await axios.post(`http://localhost:5000/api/article/${articleId}/process`);
+      const res = await axios.post(`${API_URL}/api/article/${article.id}/process?source=${article.source}`);
       if (res.data.audioUrl) {
-        setPlayingAudio(`http://localhost:5000${res.data.audioUrl}`);
+        setPlayingAudio(`${API_URL}${res.data.audioUrl}`);
       }
     } catch (err) {
       console.error('Ses oluşturulamadı', err);
@@ -80,7 +82,7 @@ export const Library = () => {
                         <h4 className="font-semibold line-clamp-1 mb-1">{article.title}</h4>
                         <div className="flex items-center gap-2 text-xs opacity-50">
                           <FileText className="w-3 h-3" />
-                          <span>PMID: {article.id}</span>
+                          <span>ID: {article.id}</span>
                           <span>• {article.source}</span>
                           <span>• {article.pubDate.split(' ')[0]}</span>
                         </div>
@@ -88,13 +90,13 @@ export const Library = () => {
                       
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => handleQuickAudio(article.id)}
+                          onClick={() => handleQuickAudio(article)}
                           className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-all"
                         >
                           <Mic className="w-4 h-4" /> Hızlı Dinle
                         </button>
                         <button
-                          onClick={() => navigate(`/presentation/${article.id}?title=${encodeURIComponent(article.title)}`)}
+                          onClick={() => navigate(`/presentation/${encodeURIComponent(encodeURIComponent(article.id))}?title=${encodeURIComponent(article.title)}&source=${article.source}`)}
                           className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-white/10 hover:bg-white/20 transition-all"
                         >
                           Sunum <ArrowRight className="w-4 h-4" />

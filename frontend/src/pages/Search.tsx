@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FileText, ArrowRight, Loader2, Plus, X } from 'lucide-react';
+import { FileText, ArrowRight, Loader2, Plus, X, Globe, Clock, Trash2 } from 'lucide-react';
+import { SourceFilter } from '../components/SourceFilter';
+import { SourceBadge } from '../components/SourceBadge';
+import type { SourceType } from '../components/SourceBadge';
 import { useStore } from '../store/useStore';
 
 interface Article {
@@ -13,16 +16,32 @@ interface Article {
 }
 
 const ShelfModal = ({ article, onClose }: { article: Article, onClose: () => void }) => {
-  const { shelves, addShelf, addArticleToShelf } = useStore();
+  const { shelves, addShelf, addArticleToShelf, removeShelf, removeArticleFromShelf } = useStore();
   const [newShelfName, setNewShelfName] = useState('');
+  const [loadingAbstract, setLoadingAbstract] = useState(false);
+  const [expandedShelfId, setExpandedShelfId] = useState<string | null>(null);
 
-  const handleAdd = (shelfId: string) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  const handleAdd = async (shelfId: string) => {
+    setLoadingAbstract(true);
+    let abstract = '';
+    try {
+      const res = await axios.post(`${API_URL}/api/article/${article.id}/process?source=${article.source}`);
+      abstract = res.data.originalAbstract || '';
+    } catch (err) {
+      console.error("Failed to fetch abstract:", err);
+    }
+    
     addArticleToShelf(shelfId, {
       id: article.id,
       title: article.title,
       source: article.source,
-      pubDate: article.pubDate
+      pubDate: article.pubDate,
+      abstract: abstract,
+      authors: article.authors
     });
+    setLoadingAbstract(false);
     onClose();
   };
 
@@ -42,18 +61,64 @@ const ShelfModal = ({ article, onClose }: { article: Article, onClose: () => voi
         <h3 className="text-xl font-bold mb-4">Rafa Ekle</h3>
         <p className="text-sm opacity-70 mb-4 line-clamp-1">{article.title}</p>
         
-        <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
-          {shelves.length === 0 && <p className="text-sm opacity-50 text-center py-2">Henüz rafınız yok.</p>}
-          {shelves.map(shelf => (
-            <button
-              key={shelf.id}
-              onClick={() => handleAdd(shelf.id)}
-              className="w-full text-left px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
-            >
-              {shelf.name} <span className="text-xs opacity-50 ml-2">({shelf.articles.length} makale)</span>
-            </button>
-          ))}
-        </div>
+        {loadingAbstract ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-2">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <span className="text-sm opacity-70 text-center text-xs">Makale ozeti aliniyor...</span>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto mb-4">
+            {shelves.length === 0 && <p className="text-sm opacity-50 text-center py-2">Henuz rafiniz yok.</p>}
+            {shelves.map(shelf => (
+              <div key={shelf.id} className="border border-white/5 rounded-lg overflow-hidden bg-white/5">
+                <div className="flex items-center justify-between p-2 hover:bg-white/10 transition-all">
+                  <button
+                    onClick={() => handleAdd(shelf.id)}
+                    className="flex-1 text-left px-2 py-1 text-sm font-semibold"
+                  >
+                    {shelf.name} <span className="text-xs opacity-50 font-normal">({shelf.articles.length} makale)</span>
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => setExpandedShelfId(expandedShelfId === shelf.id ? null : shelf.id)}
+                      className="p-1 hover:bg-white/15 rounded text-xs opacity-60 hover:opacity-100"
+                      title="Makaleleri Göster"
+                    >
+                      {expandedShelfId === shelf.id ? 'Gizle' : 'Göster'}
+                    </button>
+                    <button 
+                      onClick={() => removeShelf(shelf.id)}
+                      className="p-1 hover:bg-red-500/20 rounded text-red-400"
+                      title="Rafı Sil"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {expandedShelfId === shelf.id && (
+                  <div className="bg-black/20 p-2 border-t border-white/5 space-y-1 text-xs">
+                    {shelf.articles.length === 0 ? (
+                      <div className="text-white/40 p-1">Bu raf boş.</div>
+                    ) : (
+                      shelf.articles.map(a => (
+                        <div key={a.id} className="flex items-center justify-between gap-2 p-1 hover:bg-white/5 rounded">
+                          <span className="truncate flex-1" title={a.title}>{a.title}</span>
+                          <button 
+                            onClick={() => removeArticleFromShelf(shelf.id, a.id)}
+                            className="text-red-400/70 hover:text-red-400 p-0.5 hover:bg-white/10 rounded"
+                            title="Raftan Kaldır"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="flex gap-2 border-t border-white/10 pt-4">
           <input
@@ -81,8 +146,15 @@ export const Search = () => {
   const [error, setError] = useState('');
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const isFetching = useRef(false);
+  const offsetRef = useRef(0);
   const navigate = useNavigate();
   const [selectedArticleForShelf, setSelectedArticleForShelf] = useState<Article | null>(null);
+  const [selectedSources, setSelectedSources] = useState<SourceType[]>(['pubmed', 'semantic-scholar', 'openalex', 'arxiv', 'dergipark', 'tr-dizin', 'yoktez']);
+  const [sourceStats, setSourceStats] = useState<any[]>([]);
+  const [elapsed, setElapsed] = useState(0);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     if (!query) return;
@@ -93,18 +165,21 @@ export const Search = () => {
       setLoading(true);
       setError('');
       setOffset(0);
+      offsetRef.current = 0;
       try {
-        const res = await axios.get(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}&offset=0`, {
+        const res = await axios.get(`${API_URL}/api/search?q=${encodeURIComponent(query)}&offset=0&sources=${selectedSources.join(',')}`, {
           signal: controller.signal
         });
-        setArticles(res.data);
-        if (res.data.length < 10) setHasMore(false);
+        const data = res.data;
+        const fetchedArticles = data.articles || data || [];
+        setArticles(Array.isArray(fetchedArticles) ? fetchedArticles : []);
+        if (fetchedArticles.length < 10) setHasMore(false);
         else setHasMore(true);
       } catch (err: any) {
         if (axios.isCancel(err)) {
           console.log('Request canceled');
         } else {
-          setError('Makaleler aranırken bir hata oluştu. (Lütfen biraz bekleyip tekrar deneyin)');
+          setError('Makaleler aranirken bir hata olustu. (Lutfen biraz bekleyip tekrar deneyin)');
         }
       } finally {
         setLoading(false);
@@ -116,21 +191,26 @@ export const Search = () => {
     return () => {
       controller.abort();
     };
-  }, [query]);
+  }, [query, selectedSources]);
 
   const loadMore = async () => {
-    if (!query || loadingMore) return;
-    const nextOffset = offset + 10;
+    if (!query || loadingMore || isFetching.current) return;
+    isFetching.current = true;
     setLoadingMore(true);
+    const nextOffset = offsetRef.current + 10;
     try {
-      const res = await axios.get(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}&offset=${nextOffset}`);
-      setArticles(prev => [...prev, ...res.data]);
+      const res = await axios.get(`${API_URL}/api/search?q=${encodeURIComponent(query)}&offset=${nextOffset}&sources=${selectedSources.join(',')}`);
+      const data = res.data;
+      const moreArticles = data.articles || data || [];
+      setArticles(prev => [...prev, ...(Array.isArray(moreArticles) ? moreArticles : [])]);
       setOffset(nextOffset);
-      if (res.data.length < 10) setHasMore(false);
+      offsetRef.current = nextOffset;
+      if (moreArticles.length < 10) setHasMore(false);
     } catch (err: any) {
         console.error(err);
     } finally {
       setLoadingMore(false);
+      isFetching.current = false;
     }
   };
 
@@ -142,6 +222,14 @@ export const Search = () => {
           onClose={() => setSelectedArticleForShelf(null)} 
         />
       )}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <SourceFilter selectedSources={selectedSources} onChange={setSelectedSources} />
+        {elapsed > 0 && (
+          <span className="text-xs opacity-50 flex items-center gap-1">
+            <Clock className="w-3 h-3" /> {elapsed}ms
+          </span>
+        )}
+      </div>
       <h2 className="text-3xl font-bold mb-8">
         "<span className="opacity-80">{query}</span>" için sonuçlar
       </h2>
@@ -166,12 +254,12 @@ export const Search = () => {
           >
             <div className="flex-1">
               <h3 className="text-xl font-semibold mb-2 line-clamp-2">{article.title}</h3>
-              <p className="text-sm opacity-60 mb-2">
-                {article.source} • {article.pubDate.split(' ')[0]}
+              <p className="text-sm opacity-60 mb-2 flex items-center gap-2">
+                <SourceBadge source={article.source} /> {article.pubDate.split(' ')[0]}
               </p>
               <div className="flex items-center gap-2 text-xs opacity-50">
                 <FileText className="w-4 h-4" />
-                <span>PMID: {article.id}</span>
+                <span>ID: {article.id}</span>
                 {article.authors.length > 0 && <span>• {article.authors.slice(0, 3).join(', ')}{article.authors.length > 3 ? ' et al.' : ''}</span>}
               </div>
             </div>
@@ -184,7 +272,7 @@ export const Search = () => {
                  <Plus className="w-4 h-4" /> Rafa Ekle
                </button>
                <button
-                 onClick={() => navigate(`/presentation/${article.id}?title=${encodeURIComponent(article.title)}`)}
+                 onClick={() => navigate(`/presentation/${encodeURIComponent(encodeURIComponent(article.id))}?title=${encodeURIComponent(article.title)}&source=${article.source}`)}
                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all whitespace-nowrap"
                >
                  Özetle & Sun <ArrowRight className="w-4 h-4" />
@@ -198,7 +286,7 @@ export const Search = () => {
           <div className="mt-8 flex justify-center">
               <button 
                   onClick={loadMore}
-                  disabled={loadingMore}
+                  disabled={loadingMore || isFetching.current}
                   className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all font-semibold flex items-center gap-2"
               >
                   {loadingMore ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Daha Fazla Yükle'}

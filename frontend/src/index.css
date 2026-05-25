@@ -77,3 +77,102 @@ body {
   opacity: 0.8;
 }
 
+/* ReactQuill Dark Theme Overrides */
+.theme-space .ql-toolbar,
+.theme-moon .ql-toolbar,
+.theme-venus .ql-toolbar {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.theme-space .ql-toolbar .ql-stroke,
+.theme-moon .ql-toolbar .ql-stroke,
+.theme-venus .ql-toolbar .ql-stroke {
+  stroke: #e2e8f0 !important;
+}
+
+.theme-space .ql-toolbar .ql-fill,
+.theme-moon .ql-toolbar .ql-fill,
+.theme-venus .ql-toolbar .ql-fill {
+  fill: #e2e8f0 !important;
+}
+
+.theme-space .ql-toolbar .ql-picker,
+.theme-moon .ql-toolbar .ql-picker,
+.theme-venus .ql-toolbar .ql-picker {
+  color: #e2e8f0 !important;
+}
+
+.theme-space .ql-container,
+.theme-moon .ql-container,
+.theme-venus .ql-container {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.theme-space .ql-editor,
+.theme-moon .ql-editor,
+.theme-venus .ql-editor {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+.theme-space .ql-editor::before,
+.theme-moon .ql-editor::before,
+.theme-venus .ql-editor::before {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.theme-space .ql-picker-options,
+.theme-moon .ql-picker-options,
+.theme-venus .ql-picker-options {
+  background-color: #1a1a24 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Professional A4 Paper Design for Editor */
+.editor-a4-paper {
+  background-color: #ffffff;
+  color: #000000;
+  min-height: 1056px; /* 11 inches at 96 PPI */
+  width: 100%;
+  max-width: 816px; /* 8.5 inches at 96 PPI */
+  margin: 0 auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 40px;
+}
+
+.editor-a4-paper .ql-container {
+  background-color: transparent !important;
+  border: none !important;
+  color: #000000 !important;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 16px;
+}
+
+.editor-a4-paper .ql-editor {
+  background-color: transparent !important;
+  color: #000000 !important;
+  min-height: 900px;
+}
+
+.editor-a4-paper .ql-editor::before {
+  color: #999999 !important;
+  font-style: italic;
+}
+
+/* A4 highlight for agent edits */
+.agent-edit-highlight {
+  background-color: rgba(59, 130, 246, 0.2);
+  border-bottom: 2px solid #3b82f6;
+  animation: fadeHighlight 4s forwards;
+}
+
+@keyframes fadeHighlight {
+  0% { background-color: rgba(59, 130, 246, 0.4); }
+  100% { background-color: transparent; }
+}
+
+

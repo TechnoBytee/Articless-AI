@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search as SearchIcon } from 'lucide-react';
 import { Trending } from '../components/Trending';
 import { motion } from 'framer-motion';
+import { FloatingParticles } from '../components/FloatingParticles';
 
 export const Home = () => {
   const [query, setQuery] = useState('');
@@ -16,8 +17,10 @@ export const Home = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
+    <div className="relative flex flex-col items-center justify-center min-h-[70vh] text-center w-full overflow-hidden">
+      <FloatingParticles />
       <motion.div
+        className="relative z-10 w-full flex flex-col items-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}

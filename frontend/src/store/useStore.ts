@@ -6,6 +6,8 @@ export interface ShelfArticle {
   title: string;
   source: string;
   pubDate: string;
+  abstract?: string;
+  authors?: string[];
 }
 
 export interface Shelf {

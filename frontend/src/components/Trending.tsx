@@ -14,8 +14,9 @@ export const Trending = () => {
 
   useEffect(() => {
     const fetchTrends = async () => {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       try {
-        const res = await axios.get('http://localhost:5000/api/trends');
+        const res = await axios.get(`${API_URL}/api/trends`);
         setTrends(res.data);
       } catch (error) {
         console.error('Failed to fetch trends', error);

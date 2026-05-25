@@ -32,7 +32,7 @@ export const GraphView = ({ shelfName, articles, onClose }: GraphViewProps) => {
     nodes.push({ id: article.id, name: article.title, val: 5, color: '#a855f7' });
     links.push({ source: 'shelf', target: article.id });
 
-    article.authors.forEach((author: string) => {
+    (article.authors || []).forEach((author: string) => {
       if (!authorsSet.has(author)) {
         authorsSet.add(author);
         nodes.push({ id: author, name: author, val: 3, color: '#10b981' });
@@ -81,8 +81,34 @@ export const GraphView = ({ shelfName, articles, onClose }: GraphViewProps) => {
               width={dimensions.width}
               height={dimensions.height}
               graphData={graphData}
-              nodeLabel="name"
-              nodeAutoColorBy="color"
+              nodeColor={(n: any) => n.color}
+              nodeRelSize={6}
+              nodeCanvasObject={(node: any, ctx, globalScale) => {
+                const label = node.name;
+                const fontSize = 12 / globalScale;
+                ctx.font = `${fontSize}px Sans-Serif`;
+                const textWidth = ctx.measureText(label).width;
+                const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2 - node.val - 2, bckgDimensions[0], bckgDimensions[1]);
+
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(label, node.x, node.y - node.val - 2);
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.val, 0, 2 * Math.PI, false);
+                ctx.fillStyle = node.color;
+                ctx.fill();
+              }}
+              nodePointerAreaPaint={(node: any, color, ctx) => {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.val + 2, 0, 2 * Math.PI, false);
+                ctx.fill();
+              }}
             />
           )}
         </div>

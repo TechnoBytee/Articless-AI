@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { BaseSource, SearchResult } from './sources/base';
 
 const PUBMED_API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
@@ -21,6 +22,7 @@ export const searchArticles = async (query: string, limit: number = 10, offset: 
         retmax: limit,
         retstart: offset,
       },
+      timeout: 15000,
     });
 
     const ids = searchRes.data.esearchresult.idlist;
@@ -33,6 +35,7 @@ export const searchArticles = async (query: string, limit: number = 10, offset: 
         id: ids.join(','),
         retmode: 'json',
       },
+      timeout: 15000,
     });
 
     const articles: PubMedArticle[] = [];
@@ -67,6 +70,7 @@ export const getArticleAbstract = async (id: string): Promise<string> => {
         retmode: 'text',
         rettype: 'abstract',
       },
+      timeout: 15000,
     });
     return fetchRes.data;
   } catch (error) {
@@ -74,3 +78,23 @@ export const getArticleAbstract = async (id: string): Promise<string> => {
     throw new Error('Failed to fetch article abstract.');
   }
 };
+
+export class PubMedSource extends BaseSource {
+  name = 'pubmed';
+
+  async search(query: string, limit: number = 10, offset: number = 0): Promise<SearchResult[]> {
+    const articles = await searchArticles(query, limit, offset);
+    return articles.map(a => ({
+      id: a.id,
+      title: a.title,
+      source: 'pubmed',
+      pubDate: a.pubDate,
+      authors: a.authors,
+      url: `https://pubmed.ncbi.nlm.nih.gov/${a.id}/`,
+    }));
+  }
+
+  async getAbstract(id: string): Promise<string> {
+    return getArticleAbstract(id);
+  }
+}
